@@ -1,16 +1,16 @@
 package com.company;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) {
         Encoder encoder = new Encoder();
-        encoder.by("мама мыла раму");
+        //encoder.by("мама мыла раму");
+        Decoder decoder = new Decoder();
+        List<Double> list = Arrays.asList(0.1,0.15, 0.15, 0.15, 0.2, 0.25);
+        decoder.decode("rbkpeo", list, "001110100");
     }
 }
 
@@ -25,18 +25,18 @@ class Encoder {
 
         Collections.sort(list);
         StringBuilder lastColumn = new StringBuilder();
-        int index = 0;
+        int count = 0;
 
         for (int i = 0; i < list.size(); i++) {
             String w = list.get(i);
             if (w.equals(word)) {
-                index = i + 1;
+                count = i + 1;
             }
             lastColumn.append(w.charAt(word.length() - 1));
         }
 
         Encoder encoder = new Encoder();
-        System.out.println(encoder.encode(lastColumn.toString()));
+        System.out.println(encoder.encode(lastColumn.toString()) + " " + count);
     }
 
     public List<Integer> encode(String data) {
@@ -79,5 +79,91 @@ class Encoder {
             } else result.add(table.get(String.valueOf(data.charAt(data.length()-1))));
         }
         return result;
+    }
+}
+
+class Decoder{
+    public void decode(String words, List<Double> probabilities, String code){
+        List<Character> symbols = new ArrayList<>();
+        for (int i = 0; i < words.length(); i++) {
+            symbols.add(words.charAt(i));
+        }
+
+        boolean isSorted = false;
+        double buf;
+        char ret;
+        while(!isSorted) {
+            isSorted = true;
+            for (int i = 0; i < probabilities.size() - 1; i++) {
+                if (probabilities.get(i) < probabilities.get(i + 1)) {
+                    isSorted = false;
+
+                    buf = probabilities.get(i);
+                    probabilities.set(i, probabilities.get(i + 1));
+                    probabilities.set(i+1, buf);
+
+                    ret = symbols.get(i);
+                    symbols.set(i, symbols.get(i + 1));
+                    symbols.set(i+1, ret);
+                }
+            }
+        }
+
+        //Q(i)
+        double sum = 0.0;
+        List<Double> qi = new ArrayList<>();
+        for (int i = 0; i < probabilities.size(); i++) {
+            qi.add(sum);
+            sum+= probabilities.get(i);
+        }
+
+        //L(i)
+        List<Integer> Li = new ArrayList<>();
+        for (int i = 0; i < qi.size(); i++) {
+            double count = 1;
+            int q = 0;
+            while (count>probabilities.get(i)){
+                count = count/2;
+                q++;
+            }
+            Li.add(q);
+        }
+
+        //Переводим в двоичный
+        List<String> binary = new ArrayList<>();
+        for (int i = 0; i < qi.size(); i++) {
+            double count = 0.5;
+            double plus = 0.25;
+            boolean bool = false;
+            StringBuilder bin = new StringBuilder();
+            while (bin.length() < Li.get(i)){
+                if(count <= qi.get(i)){
+                    bin.append("1");
+                    count += plus;
+                    bool = true;
+                } else{
+                    bin.append("0");
+                    if (bool) count += plus;
+                    else count = plus;
+                }
+                plus = plus/2;
+            }
+            binary.add(bin.toString());
+        }
+
+        //Декодируем
+        List<Character> result = new ArrayList<>();
+        int left = 0;
+        int right = 1;
+        while (right != code.length() + 1){
+            for (int i = 0; i < binary.size(); i++) {
+                if(binary.get(i).equals(code.substring(left,right))){
+                    result.add(symbols.get(i));
+                    left = right;
+                }
+            }
+            right++;
+        }
+        System.out.println(result);
     }
 }
