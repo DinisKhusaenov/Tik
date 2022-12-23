@@ -6,16 +6,21 @@ import java.util.stream.Collectors;
 public class Main {
 
     public static void main(String[] args) {
+        //ЛЗВ + by
         Encoder encoder = new Encoder();
-        //encoder.by("мама мыла раму");
+        //encoder.by("mamamylaramy", "mailry");
+
+
+        //Шеннон
         Decoder decoder = new Decoder();
         List<Double> list = Arrays.asList(0.1,0.15, 0.15, 0.15, 0.2, 0.25);
-        decoder.decode("rbkpeo", list, "001110100");
+        decoder.decode("rbkpeo", list, "001110100001110100001110100");
     }
 }
 
 class Encoder {
-    public static void by(String word) {
+    private static int COUNT_BITE = 8;
+    public static void by(String word, String dic ) {
         List<String> list = new ArrayList<>(word.length());
 
         for (int i = 0; i < word.length(); i++) {
@@ -34,12 +39,13 @@ class Encoder {
             }
             lastColumn.append(w.charAt(word.length() - 1));
         }
+        System.out.println(lastColumn);
 
         Encoder encoder = new Encoder();
-        System.out.println(encoder.encode(lastColumn.toString()) + " " + count);
+        System.out.println(encoder.encode(lastColumn.toString(), dic ) + " " + count);
     }
 
-    public List<Integer> encode(String data) {
+    public List<String> encode(String data, String initialDic) {
         List<Integer> result = new ArrayList<Integer>();
 
         int count = 0;
@@ -47,9 +53,9 @@ class Encoder {
         HashMap<String, Integer> table = new HashMap<String, Integer>();
 
         //добавляем все символы
-        for (int i = 0; i < data.length(); i++) {
-            if(!table.containsKey(String.valueOf(data.charAt(i)))) {
-                table.put(String.valueOf(data.charAt(i)), count);
+        for (int i = 0; i < initialDic.length(); i++) {
+            if(!table.containsKey(String.valueOf(initialDic.charAt(i)))) {
+                table.put(String.valueOf(initialDic.charAt(i)), count);
                 count ++;
             }
         }
@@ -78,7 +84,25 @@ class Encoder {
                 result.add(table.get(word.toString()));
             } else result.add(table.get(String.valueOf(data.charAt(data.length()-1))));
         }
-        return result;
+        System.out.println(table);
+        List<String> strRes = new ArrayList<>();
+        for (int i = 0; i < result.size(); i++) {
+            String answer = to8Bit(Integer.toBinaryString(result.get(i)));
+            strRes.add(answer);
+            System.out.printf("%s", answer);
+
+        }
+        System.out.println();
+        return strRes;
+    }
+
+    private String to8Bit(String number) {
+        StringBuilder stringBuilder = new StringBuilder("");
+        for (int i = 0; i < COUNT_BITE - number.length(); i++) {
+            stringBuilder.append("0");
+        }
+        stringBuilder.append(number);
+        return stringBuilder.toString();
     }
 }
 
